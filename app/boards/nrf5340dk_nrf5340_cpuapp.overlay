@@ -20,6 +20,21 @@
 		led-gpios = <&gpio0 28 GPIO_ACTIVE_LOW>;
 		blink-period-ms = <1000>;
 	};
+
+	auxdisplay_0: auxdisplay {
+	    compatible = "hit,hd44780";
+		status = "okay";
+		columns = <16>;
+		rows = <2>;
+		mode = <4>;
+		register-select-gpios = <&gpio0 4 GPIO_ACTIVE_HIGH>;
+		enable-gpios = <&gpio0 5 GPIO_ACTIVE_HIGH>;
+		data-bus-gpios = <0>, <0>, <0>, <0>,
+			<&gpio0 6 GPIO_ACTIVE_HIGH>,
+			<&gpio0 7 GPIO_ACTIVE_HIGH>,
+			<&gpio0 25 GPIO_ACTIVE_HIGH>,
+			<&gpio0 26 GPIO_ACTIVE_HIGH>;
+	};
 };
 
 &gpio0 {

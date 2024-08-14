@@ -1,15 +1,4 @@
 / {
-	example_sensor: example-sensor {
-		compatible = "zephyr,example-sensor";
-		input-gpios = <&gpio0 23 (GPIO_PULL_UP | GPIO_ACTIVE_LOW)>;
-	};
-
-	blink_led: blink-led {
-		compatible = "blink-gpio-led";
-		led-gpios = <&gpio0 28 GPIO_ACTIVE_LOW>;
-		blink-period-ms = <1000>;
-	};
-
 	auxdisplay_0: auxdisplay {
 	    compatible = "hit,hd44780";
 		status = "okay";

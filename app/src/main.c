@@ -8,6 +8,7 @@
 #include <zephyr/device.h>
 #include <zephyr/drivers/sensor.h>
 #include <zephyr/drivers/auxdisplay.h>
+#include <zephyr/input/input.h>
 #include <zephyr/logging/log.h>
 
 #include <app/drivers/blink.h>
@@ -16,8 +17,24 @@
 
 LOG_MODULE_REGISTER(main, CONFIG_APP_LOG_LEVEL);
 
+const struct device *const knob_dev = DEVICE_DT_GET(DT_NODELABEL(knob_0));
+K_MSGQ_DEFINE(mouse_msgq, MOUSE_REPORT_COUNT, 2, 1);
+
 #define BLINK_PERIOD_MS_STEP 100U
 #define BLINK_PERIOD_MS_MAX  1000U
+
+static void knob_cb(struct input_event *evt)
+{
+	printk("Knob input detected, code: %d, value: %d\n", evt->code, evt->value);
+
+	/*
+	if (k_msgq_put(&mouse_msgq, tmp, K_NO_WAIT) != 0) {
+		LOG_ERR("Failed to put new input event");
+	}
+	*/
+}
+
+INPUT_CALLBACK_DEFINE(knob_dev, knob_cb);
 
 int main(void)
 {
@@ -36,70 +53,24 @@ int main(void)
 		LOG_ERR("Failed to enable cursor: %d", rc);
 	}
 
-	snprintk(data, sizeof(data), "Hello world from %s", CONFIG_BOARD);
+	snprintk(data, sizeof(data), "Hi Liana how areyou doing?");
 	rc = auxdisplay_write(dev, data, strlen(data));
 
 	if (rc != 0) {
 		LOG_ERR("Failed to write data: %d", rc);
 	}
-	return 0;
 
-	int ret;
-	unsigned int period_ms = BLINK_PERIOD_MS_MAX;
-	const struct device *sensor, *blink;
-	struct sensor_value last_val = { 0 }, val;
+	int curr_channel = 1;
 
-	printk("Zephyr Example Application %s\n", APP_VERSION_STRING);
-
-	sensor = DEVICE_DT_GET(DT_NODELABEL(example_sensor));
-	if (!device_is_ready(sensor)) {
-		LOG_ERR("Sensor not ready");
-		return 0;
-	}
-
-	blink = DEVICE_DT_GET(DT_NODELABEL(blink_led));
-	if (!device_is_ready(blink)) {
-		LOG_ERR("Blink LED not ready");
-		return 0;
-	}
-
-	ret = blink_off(blink);
-	if (ret < 0) {
-		LOG_ERR("Could not turn off LED (%d)", ret);
-		return 0;
-	}
-
-	printk("Use the sensor to change LED blinking period\n");
 
 	while (1) {
-		ret = sensor_sample_fetch(sensor);
-		if (ret < 0) {
-			LOG_ERR("Could not fetch sample (%d)", ret);
-			return 0;
-		}
-
-		ret = sensor_channel_get(sensor, SENSOR_CHAN_PROX, &val);
-		if (ret < 0) {
-			LOG_ERR("Could not get sample (%d)", ret);
-			return 0;
-		}
-
-		if ((last_val.val1 == 0) && (val.val1 == 1)) {
-			if (period_ms == 0U) {
-				period_ms = BLINK_PERIOD_MS_MAX;
-			} else {
-				period_ms -= BLINK_PERIOD_MS_STEP;
-			}
-
-			printk("Proximity detected, setting LED period to %u ms\n",
-			       period_ms);
-			blink_set_period_ms(blink, period_ms);
-		}
-
-		last_val = val;
-
-		k_sleep(K_MSEC(100));
-	}
+        rc = auxdisplay_channel_select(dev, channel);
+        if (rc != 0) {
+            LOG_ERR("Failed to select channel: %d", rc);
+        }
+        channel = (channel + 1) % 2;
+        k_sleep(K_MSEC(1000));
+    }
 
 	return 0;
 }
